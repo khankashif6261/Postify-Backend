@@ -72,6 +72,10 @@ app.post("/login",async (req, res)=> {
 })
 app.get("/home", async (req, res) => {
   try {
+    console.log("=== DEBUG HOME ROUTE ===");
+    console.log("Cookies received:", req.cookies);
+    console.log("Headers:", req.headers);
+    console.log("Origin:", req.headers.origin);
     const token = req.cookies.token; 
     if (!token) {
       return res.status(401).json({ msg: "No token" });
