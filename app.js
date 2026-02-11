@@ -56,8 +56,8 @@ app.post("/login",async (req, res)=> {
             const token = jwt.sign({ id: User._id , user: User.name }, process.env.JWT_SECRET);
             res.cookie('token', token, {
             httpOnly: true,
-            sameSite: "lax",
-            secure: false
+            secure: true,
+            sameSite: "none"
             });     
             return res.status(200).json({userAuth: true});
         }
@@ -70,17 +70,25 @@ app.post("/login",async (req, res)=> {
         }    
     })
 })
-app.get("/home", async (req, res)=> {
-    const token = req.cookies.token;
+app.get("/home", async (req, res) => {
+  try {
+    const token = req.cookies.token; 
+    if (!token) {
+      return res.status(401).json({ msg: "No token" });
+    }
     const Userdecoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.status(200).json({username: Userdecoded.user});
+    res.status(200).json({ username: Userdecoded.user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
 });
 app.post("/logout", (req, res)=>{
     res.clearCookie('token', {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     path: '/',
-    secure: false
+    secure: true
   });
     res.status(200).json({isLogout: true});
 });
@@ -158,7 +166,7 @@ app.get("/posts", async (req, res)=> {
 });
 app.delete("/posts/:id", async (req,res)=> {
     try {
-        const post = Post.findById(req.params.id);
+        const post = await Post.findById(req.params.id);
         await post.deleteOne();
         return res.json({deleted: true});
     }
@@ -167,9 +175,9 @@ app.delete("/posts/:id", async (req,res)=> {
         return res.json({deleted: false});
     }
 })
-app.get("/edit/:id", (req, res)=> {
+app.get("/edit/:id", async (req, res)=> {
     try {
-        const post = Post.findById(req.params.id);
+        const post = await Post.findById(req.params.id);
         return res.json(post);
     }
     catch (err) {
@@ -219,4 +227,7 @@ app.put("/posts/:id/like", async (req, res) => {
         console.log(err);
     }
 });
-app.listen(5000);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT,"0.0.0.0", ()=>{
+    console.log(`server is running on port: ${PORT}`)
+});
