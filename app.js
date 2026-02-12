@@ -9,6 +9,7 @@ const app = express();
 require("dotenv").config();
 app.use(express.json());
 app.use(cookieParser());
+app.set("trust proxy", 1);
 const multer = require("multer");
 const storage = multer.diskStorage({
   destination: "uploads/",
@@ -59,7 +60,8 @@ app.post("/login",async (req, res)=> {
             res.cookie('token', token, {
             httpOnly: true,
             secure: true,
-            sameSite: "none"
+            sameSite: "none",
+            path: '/',
             });     
             return res.status(200).json({userAuth: true});
         }
@@ -79,6 +81,7 @@ app.get("/home", async (req, res) => {
     console.log("Headers:", req.headers);
     console.log("Origin:", req.headers.origin);
     const token = req.cookies.token; 
+    console.log(req.cookies.token);
     if (!token) {
       return res.status(401).json({ msg: "No token" });
     }
