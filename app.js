@@ -32,7 +32,7 @@ app.get("/",(req, res)=> {
 app.get("/register", (req,res)=> {
     res.send("hey");
 })
-app.post('/register', (req, res)=> {
+app.post('/register', async (req, res)=> {
     const {name, mail, pass}=req.body;
     bcrypt.genSalt(10, (err, salt)=> {
         bcrypt.hash(pass, salt, async (err, hashedPass)=> {
@@ -74,7 +74,7 @@ app.post("/login",async (req, res)=> {
         }    
     })
 })
-app.get("/home", async (req, res) => {
+app.get("/home",verifyUser, async (req, res) => {
   try {
     console.log("=== DEBUG HOME ROUTE ===");
     console.log("Cookies received:", req.cookies);
@@ -102,7 +102,7 @@ app.post("/logout", (req, res)=>{
     res.status(200).json({isLogout: true});
 });
 
-app.post("/create",upload.single("media"), async (req, res)=> {
+app.post("/create",verifyUser,upload.single("media"), async (req, res)=> {
     try {
     const { content, subtea } = req.body;
     const token = req.cookies.token;
@@ -125,7 +125,7 @@ app.post("/create",upload.single("media"), async (req, res)=> {
         res.json({post: false});
     }
 });
-app.get("/my-posts", async (req, res) => {
+app.get("/my-posts",verifyUser, async (req, res) => {
   try {
     const token = req.cookies.token;
     if (!token) {
@@ -156,7 +156,7 @@ app.get("/subtea/:name", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-app.get("/profile", async (req, res)=> {
+app.get("/profile",verifyUser, async (req, res)=> {
     try {
     const token = req.cookies.token;
     const Userdecoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -167,7 +167,7 @@ app.get("/profile", async (req, res)=> {
     res.status(500).json({msg: "Error happened in the server"});
    }
 });
-app.get("/posts", async (req, res)=> {
+app.get("/posts",verifyUser, async (req, res)=> {
     const posts = await Post.find()
     .populate("user", "name")
     .sort({ createdAt: -1 });
@@ -236,6 +236,18 @@ app.put("/posts/:id/like", async (req, res) => {
         console.log(err);
     }
 });
+const verifyUser = (req, res, next) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ msg: "Not authenticated" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ msg: "Invalid token" });
+  }
+};
 const PORT = process.env.PORT || 5000;
 app.listen(PORT,"0.0.0.0", ()=>{
     console.log(`server is running on port: ${PORT}`)
