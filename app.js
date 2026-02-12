@@ -26,6 +26,18 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+const verifyUser = (req, res, next) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ msg: "Not authenticated" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ msg: "Invalid token" });
+  }
+};
 app.get("/",(req, res)=> {
     res.json({isDefault: true});
 })
@@ -236,18 +248,7 @@ app.put("/posts/:id/like", async (req, res) => {
         console.log(err);
     }
 });
-const verifyUser = (req, res, next) => {
-  try {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ msg: "Not authenticated" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ msg: "Invalid token" });
-  }
-};
 const PORT = process.env.PORT || 5000;
 app.listen(PORT,"0.0.0.0", ()=>{
     console.log(`server is running on port: ${PORT}`)
