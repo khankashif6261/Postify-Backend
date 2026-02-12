@@ -21,7 +21,9 @@ app.use("/uploads", express.static("uploads"));
 app.use(cors({
   origin:
     process.env.CLIENT_URL,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.get("/",(req, res)=> {
     res.json({isDefault: true});
@@ -56,7 +58,7 @@ app.post("/login",async (req, res)=> {
             const token = jwt.sign({ id: User._id , user: User.name }, process.env.JWT_SECRET);
             res.cookie('token', token, {
             httpOnly: true,
-            secure: true,
+            secure: false,
             sameSite: "none"
             });     
             return res.status(200).json({userAuth: true});
@@ -92,7 +94,7 @@ app.post("/logout", (req, res)=>{
     httpOnly: true,
     sameSite: 'none',
     path: '/',
-    secure: true
+    secure: false
   });
     res.status(200).json({isLogout: true});
 });
