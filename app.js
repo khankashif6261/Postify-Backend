@@ -40,7 +40,10 @@ const verifyUser = (req, res, next) => {
 };
 app.get("/",(req, res)=> {
     res.json({isDefault: true});
-})
+});
+app.get("/verify", verifyUser, (req, res) => {
+  res.status(200).json({ valid: true });
+});
 app.get("/register", (req,res)=> {
     res.send("hey");
 })
